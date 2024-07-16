@@ -42,5 +42,30 @@ export default class ProvinceService{
         return resArray
         
     }
+
+    async getLocationsByProvinceId(provinceId) {
+        const repo = new ProvinceRepository();
+            const locations = await repo.getLocationsByProvinceId(provinceId);
+
+        if (!locations) {
+            return {
+                status: 404,
+                data: "Provincia no encontrada"
+            };
+        }
+
+        return {
+            status: 200,
+            data: {
+                collection: locations,
+                pagination: {
+                    limit: 0,
+                    offset: 0,
+                    nextPage: "",
+                    total: locations.length
+                }
+            }
+        };
+    }
        
 }

@@ -8,7 +8,7 @@ const client = new Client(config);
 await client.connect();
 export default class ProvinceRepository {
   getAllAsync = async () => {
-    let sql = `SELECT * from provinces`;
+    let sql = `SELECT * from provinces order by id`;
     let result = await client.query(sql);
     const provincias = result.rows;
     return provincias;
@@ -69,6 +69,7 @@ export default class ProvinceRepository {
         return ["Error interno del servidor", 500];
     }
 };
+
   putAsync = async (body) => {
     try {
       const sql1 = `SELECT id from provinces WHERE id=$1`;
@@ -121,4 +122,21 @@ export default class ProvinceRepository {
 
     return resArray;
   };
+
+  getLocationsByProvinceId = async (provinceId)=> {
+    try {
+        const query = 'SELECT * FROM locations WHERE id_province = $1';
+        const result = await client.query(query, [provinceId]);
+
+        if (result.rows.length === 0) {
+            return null;
+        }
+
+        return result.rows;
+    } catch (error) {
+        console.error('Error fetching locations:', error);
+        throw error;
+    }
+}
+
 }

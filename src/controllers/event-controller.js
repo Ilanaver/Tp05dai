@@ -1,45 +1,52 @@
 import { Router } from 'express';
-import EventService from '../services/events-service.js';
-
+import EventService from '../services/events-service.js'
+import EventRepositoryverifyToken from '../repositories/event-repository.js'
 const router = Router();
-const eventService = new EventService();
+const svc = new EventService();
 
-router.get('/', async (req, res) => {
-    const queryParams = req.query;
-    const response = await eventService.buscarEventos(queryParams);
-    res.status(response[1]).send(response[0]);
+
+router.get('', async(req, res) => {
+    const params = req.query;
+    const resArray = await svc.searchAsync(params);
+    res.status(resArray[1]).send(resArray[0]);
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', async(req, res) => {
+    const id = req.params.id;
+    const resArray = await svc.getByIdAsync(id);
+    res.status(resArray[1]).send(resArray[0]);
+    
+});
+
+router.get('/:id/enrollment', async(req, res) => {
     const eventId = req.params.id;
-    const response = await eventService.obtenerEventoPorId(eventId);
-    res.status(response[1]).send(response[0]);
+    const params = req.query;
+    const resArray = await svc.searchEnrollments(eventId,params);
+    res.status(resArray[1]).send(resArray[0]);
 });
 
-router.get('/:id/inscripcion', async (req, res) => {
+router.post('/:id/enrollment', async(req, res) => {
     const eventId = req.params.id;
-    const queryParams = req.query;
-    const response = await eventService.buscarInscripciones(eventId, queryParams);
-    res.status(response[1]).send(response[0]);
+    console.log(eventId)
+    const resArray = await svc.addEnrollmentOfUser(eventId);
+    res.status(resArray[1]).send(resArray[0]);
 });
 
-router.post('/:id/inscripcion', async (req, res) => {
-    const eventId = req.params.id;
-    const response = await eventService.agregarInscripcionDeUsuario(eventId);
-    res.status(response[1]).send(response[0]);
+
+router.post('', async(req, res) => {
+    const body = req.body;
+    const token = req.headers.authorization && req.headers.authorization.split(' ')[1]; 
+    const resArray = await svc.createAsync(body,token);
+    res.status(resArray[1]).send(resArray[0]);
 });
 
-router.post('/', async (req, res) => {
-    const eventData = req.body;
-    const response = await eventService.crearEvento(eventData);
-    res.status(response[1]).send(response[0]);
-});
 
 router.put('/', async (req, res) => {
     try {
-        const eventData = req.body;
-        const response = await eventService.actualizarEvento(eventData);
-        res.status(response[1]).send(response[0]);
+        const token = req.headers.authorization && req.headers.authorization.split(' ')[1]; 
+        const resArray = await svc.UpdateAsync(req.body,token);
+        
+        res.status(resArray[1]).send(resArray[0]);
     } catch (error) {
         console.error("Error en el controlador de eventos:", error);
         res.status(500).send("Error interno del servidor");
@@ -48,24 +55,39 @@ router.put('/', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
     const eventId = req.params.id;
+    const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+  
     try {
-        const result = await eventService.eliminarEvento(eventId);
-        if (result === 0) {
-            return res.status(404).json({ error: "Evento no encontrado o no pertenece al usuario autenticado" });
-        }
-        res.status(200).json({ message: "Evento eliminado exitosamente" });
+      const result = await svc.deleteEvent(eventId, token);
+  
+      if (!result.success) {
+        return res.status(result.status).json({ error: result.message });
+      }
+  
+      return res.status(result.status).json({ message: result.message });
     } catch (error) {
-        console.error("Error eliminando el evento:", error);
-        res.status(500).send("Error interno del servidor");
+      console.error("Error in event controller:", error);
+      return res.status(500).json({ error: "Internal server error" });
     }
-});
+  });
+  
 
-router.patch('/:id/inscripcion/:rating', async (req, res) => {
-    const observaciones = req.body.observations;
+
+router.patch('/:id/enrollment/:entero', async(req, res) => {
+    const bodyDesc = req.body.observations;
     const eventId = req.params.id;
-    const rating = req.params.rating;
-    const response = await eventService.calificarInscripcion(eventId, rating, observaciones);
-    res.status(response[1]).send(response[0]);
-});
+    const eventRating = req.params.entero;
+    const resArray = await svc.ratingEnrollment(eventId,eventRating,bodyDesc);
+    res.status(resArray[1]).send(resArray[0]);
+})
+
+router.delete('/:id/enrollment/', async(req,res) => {
+
+    const eventId = req.params.id;
+    console.log(eventId)
+    const resArray = await svc.deleteEnrollmentOfUser(eventId);
+    res.status(resArray[1]).send(resArray[0]);
+
+} )
 
 export default router;
