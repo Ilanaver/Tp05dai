@@ -26,10 +26,14 @@ router.get('/:id/enrollment', async(req, res) => {
 });
 
 router.post('/:id/enrollment', async(req, res) => {
-    const eventId = req.params.id;
-    console.log(eventId)
-    const resArray = await svc.addEnrollmentOfUser(eventId);
-    res.status(resArray[1]).send(resArray[0]);
+        const token = req.headers['authorization'].split(' ')[1]; // Extract token from Authorization header
+        try {
+            const result = await svc.addEnrollmentOfUser(req.params.id, token); // Pass the token to the function
+            res.status(result[1]).json(result[0]);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+
 });
 
 

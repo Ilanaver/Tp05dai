@@ -106,9 +106,9 @@ export default class EventService {
 
 
 
-  addEnrollmentOfUser = async (id) => {
+  addEnrollmentOfUser = async (id, token) => {
     const repo = new EventRepository();
-    const result = await repo.addEnrollmentOfUser(id)
+    const result = await repo.addEnrollmentOfUser(id, token)
     return result;
 
   }
